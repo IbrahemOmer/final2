@@ -1,0 +1,91 @@
+class Account:
+    def __init__(self, name, balance=0):
+        self._account_name = name
+        self._account_balance = balance if balance >= 0 else 0
+
+    def deposit(self, amount):
+        if amount > 0:
+            self._account_balance += amount
+            return True
+        return False
+
+    def withdraw(self, amount):
+        if 0 < amount <= self._account_balance:
+            self._account_balance -= amount
+            return True
+        return False
+
+    def get_balance(self):
+        return self._account_balance
+
+    def get_name(self):
+        return self._account_name
+
+    def set_balance(self, value):
+        self._account_balance = max(value, 0)
+
+    def set_name(self, value):
+        if isinstance(value, str):
+            self._account_name = value
+
+    def __str__(self):
+        return f"Account name = {self.get_name()}, Account balance = {self.get_balance():.2f}"
+
+    def get_account_type(self):
+        return "Generic Account"  # Added this method to account for base Account type
+
+
+class SavingAccount(Account):
+    MINIMUM = 100
+    RATE = 0.02
+
+    def __init__(self, name, balance=0):
+        super().__init__(name, balance)
+        self.deposit_count = 0
+
+    def apply_interest(self):
+        if self.deposit_count > 0 and self.deposit_count % 5 == 0:
+            interest = self.get_balance() * SavingAccount.RATE
+            self.deposit(interest)
+
+    def deposit(self, amount):
+        if super().deposit(amount):
+            self.deposit_count += 1
+            self.apply_interest()
+            return True
+        return False
+
+    def withdraw(self, amount):
+        if 0 < amount <= self.get_balance() - SavingAccount.MINIMUM:
+            return super().withdraw(amount)
+        return False
+
+    def set_balance(self, value):
+        if value < SavingAccount.MINIMUM:
+            super().set_balance(SavingAccount.MINIMUM)
+        else:
+            super().set_balance(value)
+
+    def __str__(self):
+        return f"SAVING ACCOUNT: Account name = {self.get_name()}, Account balance = {self.get_balance():.2f}"
+
+    def get_account_type(self):
+        return "Saving"  # Return "Saving" for SavingAccount
+
+
+class CheckingAccount(Account):
+    MINIMUM = 50
+
+    def __init__(self, name, balance=0):
+        super().__init__(name, balance)
+
+    def withdraw(self, amount):
+        if 0 < amount <= self.get_balance() - CheckingAccount.MINIMUM:
+            return super().withdraw(amount)
+        return False
+
+    def __str__(self):
+        return f"CHECKING ACCOUNT: Account name = {self.get_name()}, Account balance = {self.get_balance():.2f}"
+
+    def get_account_type(self):
+        return "Checking"  # Return "Checking" for CheckingAccount
