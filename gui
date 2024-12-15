@@ -1,0 +1,158 @@
+from accounts import Account, SavingAccount, CheckingAccount
+import tkinter as tk
+
+
+class Bank:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Bank App")
+
+        self.accounts = {
+            "Saving": SavingAccount("Savings"),
+            "Checking": CheckingAccount("Checking")
+        }
+
+        self.selected_account = self.accounts["Saving"]
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.account_label = tk.Label(self.root,
+                                      text=f"Selected Account: {self.selected_account.get_account_type()} - {self.selected_account.get_name()}")
+        self.account_label.grid(row=0, column=0, columnspan=2)
+
+        self.balance_label = tk.Label(self.root, text=f"Balance: ${self.selected_account.get_balance():.2f}")
+        self.balance_label.grid(row=1, column=0, columnspan=2)
+
+        self.deposit_label = tk.Label(self.root, text="Deposit Amount:")
+        self.deposit_label.grid(row=2, column=0)
+
+        self.deposit_entry = tk.Entry(self.root)
+        self.deposit_entry.grid(row=2, column=1)
+
+        self.deposit_button = tk.Button(self.root, text="Deposit", command=self.deposit)
+        self.deposit_button.grid(row=3, column=0, columnspan=2)
+
+        self.withdraw_label = tk.Label(self.root, text="Withdraw Amount:")
+        self.withdraw_label.grid(row=4, column=0)
+
+        self.withdraw_entry = tk.Entry(self.root)
+        self.withdraw_entry.grid(row=4, column=1)
+
+        self.withdraw_button = tk.Button(self.root, text="Withdraw", command=self.withdraw)
+        self.withdraw_button.grid(row=5, column=0, columnspan=2)
+
+        self.switch_savings_button = tk.Button(self.root, text="Switch to Savings", command=self.switch_to_savings)
+        self.switch_savings_button.grid(row=6, column=0)
+
+        self.switch_checking_button = tk.Button(self.root, text="Switch to Checking", command=self.switch_to_checking)
+        self.switch_checking_button.grid(row=6, column=1)
+
+        self.create_account_label = tk.Label(self.root, text="Create New Account")
+        self.create_account_label.grid(row=7, column=0, columnspan=2)
+
+        self.account_name_label = tk.Label(self.root, text="Account Name:")
+        self.account_name_label.grid(row=8, column=0)
+
+        self.account_name_entry = tk.Entry(self.root)
+        self.account_name_entry.grid(row=8, column=1)
+
+        self.account_type_label = tk.Label(self.root, text="Account Type (Saving/Checking):")
+        self.account_type_label.grid(row=9, column=0)
+
+        self.account_type_entry = tk.Entry(self.root)
+        self.account_type_entry.grid(row=9, column=1)
+
+        self.initial_balance_label = tk.Label(self.root, text="Initial Balance:")
+        self.initial_balance_label.grid(row=10, column=0)
+
+        self.initial_balance_entry = tk.Entry(self.root)
+        self.initial_balance_entry.grid(row=10, column=1)
+
+        self.create_account_button = tk.Button(self.root, text="Create Account", command=self.create_account)
+        self.create_account_button.grid(row=11, column=0, columnspan=2)
+
+    def deposit(self):
+        try:
+            amount = float(self.deposit_entry.get())
+            if amount > 0:
+                self.selected_account.deposit(amount)
+                self.update_balance_label()
+            else:
+                self.show_error("Deposit amount must be positive.")
+        except ValueError:
+            self.show_error("Invalid deposit amount.")
+
+    def withdraw(self):
+        try:
+            amount = float(self.withdraw_entry.get())
+            if amount > 0:
+                if self.selected_account.withdraw(amount):
+                    self.update_balance_label()
+                else:
+                    self.show_error("Insufficient funds.")
+            else:
+                self.show_error("Withdraw amount must be positive.")
+        except ValueError:
+            self.show_error("Invalid withdraw amount.")
+
+    def switch_to_savings(self):
+        self.selected_account = self.accounts["Saving"]
+        self.update_account_label()
+
+    def switch_to_checking(self):
+        self.selected_account = self.accounts["Checking"]
+        self.update_account_label()
+
+    def create_account(self):
+        account_name = self.account_name_entry.get()
+        account_type = self.account_type_entry.get().capitalize()
+        try:
+            initial_balance = float(self.initial_balance_entry.get())
+            if initial_balance < 0:
+                self.show_error("Initial balance cannot be negative.")
+                return
+        except ValueError:
+            self.show_error("Invalid initial balance.")
+            return
+
+        if account_name and account_type in ["Saving", "Checking"]:
+            if account_type == "Saving":
+                new_account = SavingAccount(account_name, initial_balance)
+            else:
+                new_account = CheckingAccount(account_name, initial_balance)
+
+            self.accounts[account_type] = new_account
+            self.selected_account = new_account
+
+            self.account_name_entry.delete(0, tk.END)
+            self.account_type_entry.delete(0, tk.END)
+            self.initial_balance_entry.delete(0, tk.END)
+
+            self.update_account_label()
+        else:
+            self.show_error("Invalid account type. Please enter 'Saving' or 'Checking'.")
+
+    def update_balance_label(self):
+        self.balance_label.config(text=f"Balance: ${self.selected_account.get_balance():.2f}")
+
+    def update_account_label(self):
+        self.account_label.config(
+            text=f"Selected Account: {self.selected_account.get_account_type()} - {self.selected_account.get_name()}")
+        self.update_balance_label()
+
+    def show_error(self, message):
+        error_window = tk.Toplevel(self.root)
+        error_window.title("Error")
+        error_label = tk.Label(error_window, text=message)
+        error_label.pack()
+        close_button = tk.Button(error_window, text="Close", command=error_window.destroy)
+        close_button.pack()
+
+
+def main():
+    root = tk.Tk()
+    app = BankApp(root)
+    root.mainloop()
+
+
